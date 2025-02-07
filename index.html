@@ -1,0 +1,68 @@
+import os
+import requests
+import subprocess
+import time
+
+# Replace these with your details
+GITHUB_TOKEN = 'your-github-token'
+USERNAME = 'your-username'
+REPO_NAME = 'new-repository'  # The name of the new repo you want to create
+DESCRIPTION = 'My new GitHub Pages site'
+BRANCH_NAME = 'main'
+
+# Step 1: Create the GitHub repository
+repo_url = f'https://api.github.com/user/repos'
+headers = {
+    'Authorization': f'token {GITHUB_TOKEN}',
+    'Content-Type': 'application/json'
+}
+repo_data = {
+    'name': REPO_NAME,
+    'description': DESCRIPTION,
+    'auto_init': True,  # Initialize with a README
+    'private': False,   # Set the repo to public
+    'has_pages': True   # Enable GitHub Pages for this repo
+}
+
+response = requests.post(repo_url, headers=headers, json=repo_data)
+
+if response.status_code == 201:
+    print(f'Repository {REPO_NAME} created successfully.')
+else:
+    print(f'Error creating repo: {response.json()}')
+
+# Step 2: Clone the repository locally
+os.makedirs(REPO_NAME, exist_ok=True)
+subprocess.run(['git', 'clone', f'https://github.com/{USERNAME}/{REPO_NAME}.git', REPO_NAME])
+
+# Step 3: Create a simple index.html for GitHub Pages
+index_content = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My GitHub Pages Site</title>
+</head>
+<body>
+    <h1>Welcome to my GitHub Pages site!</h1>
+    <p>This is an automatically generated page.</p>
+</body>
+</html>
+"""
+
+index_path = os.path.join(REPO_NAME, 'index.html')
+with open(index_path, 'w') as file:
+    file.write(index_content)
+
+# Step 4: Add, commit, and push the changes
+subprocess.run(['git', '-C', REPO_NAME, 'add', '.'])
+subprocess.run(['git', '-C', REPO_NAME, 'commit', '-m', 'Initial commit with index.html'])
+subprocess.run(['git', '-C', REPO_NAME, 'push', 'origin', BRANCH_NAME])
+
+# Step 5: Wait a bit and check the GitHub Pages link
+time.sleep(5)  # Allow GitHub some time to set up the page
+
+# GitHub Pages URL format
+pages_url = f'https://{USERNAME}.github.io/{REPO_NAME}/'
+print(f'GitHub Pages site is available at: {pages_url}')
